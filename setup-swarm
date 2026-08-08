@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# setup-swarm — download a SwarmForge workflow branch from the fork and
+# configure swarmforge/swarmforge.conf with opencode agents + per-role models.
+#
+# Usage:
+#   setup-swarm [branch] [role=model ...] [--auto] [--force]
+#
+#   branch       two-pack | four-pack | six-pack (default: four-pack)
+#   role=model   bare model names use the opencode-go provider;
+#                use provider/model to override (e.g. opencode/deepseek-v4-flash-free)
+#   --auto       append --auto to every agent (dangerous: auto-approves permissions)
+#   --force      re-download the branch even if swarmforge/ already exists
+#
+# Default models: coder/architect -> kimi-k3, other roles -> deepseek-v4-flash.
+#
+# Examples:
+#   setup-swarm
+#   setup-swarm six-pack
+#   setup-swarm six-pack coder=kimi-k2.7-code QA=kimi-k3
+#   setup-swarm two-pack cleaner=opencode/deepseek-v4-flash-free --auto
+
+set -euo pipefail
+
+FORK="${SWARMFORGE_FORK:-Davidramos73/swarm-forge}"
+BRANCH="four-pack"
+AUTO=0
+FORCE=0
+
+declare -A MODELS
+
+usage() {
+  sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+  exit "${1:-0}"
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    -h|--help) usage 0 ;;
+    --auto) AUTO=1 ;;
+    --force) FORCE=1 ;;
+    two-pack|four-pack|six-pack) BRANCH="$arg" ;;
+    *=*)
+      role="${arg%%=*}"
+      model="${arg#*=}"
+      [[ "$model" == */* ]] || model="opencode-go/$model"
+      MODELS["$role"]="$model"
+      ;;
+    *) echo "setup-swarm: unknown argument '$arg'" >&2; usage 1 ;;
+  esac
+done
+
+default_model_for() {
+  case "$1" in
+    coder|architect) echo "opencode-go/kimi-k3" ;;
+    *) echo "opencode-go/deepseek-v4-flash" ;;
+  esac
+}
+
+# --- 1. download branch (only if needed) --------------------------------
+if [[ -f swarmforge/swarmforge.conf && "$FORCE" -eq 0 ]]; then
+  echo "setup-swarm: reusing existing swarmforge/ (use --force to re-download '$BRANCH')"
+else
+  echo "setup-swarm: downloading '$BRANCH' from github.com/$FORK"
+  TMP_DIR="$(mktemp -d)"
+  trap 'rm -rf "$TMP_DIR"' EXIT
+  curl -fsSL "https://github.com/${FORK}/archive/refs/heads/${BRANCH}.tar.gz" \
+    | tar -xz --strip-components=1 -C "$TMP_DIR"
+  # copy only the swarm launcher + config; never clobber the project's .gitignore
+  cp "$TMP_DIR/swarm" ./swarm
+  chmod +x ./swarm
+  rm -rf ./swarmforge
+  cp -R "$TMP_DIR/swarmforge" ./swarmforge
+fi
+
+CONF=swarmforge/swarmforge.conf
+[[ -f "$CONF" ]] || { echo "setup-swarm: $CONF not found" >&2; exit 1; }
+
+# --- 2. rewrite window lines --------------------------------------------
+TMP_CONF="$(mktemp)"
+while IFS= read -r line; do
+  if [[ "$line" =~ ^[[:space:]]*window[[:space:]]+ ]]; then
+    read -r _ role _agent worktree mode _rest <<< "$line"
+    [[ "$mode" == "task" || "$mode" == "batch" ]] || mode="task"
+    model="${MODELS[$role]:-$(default_model_for "$role")}"
+    extra="-m $model"
+    [[ "$AUTO" -eq 1 ]] && extra="$extra --auto"
+    printf 'window %s opencode %s %s %s\n' "$role" "$worktree" "$mode" "$extra" >> "$TMP_CONF"
+  else
+    printf '%s\n' "$line" >> "$TMP_CONF"
+  fi
+done < "$CONF"
+mv "$TMP_CONF" "$CONF"
+
+# --- 3. make sure runtime dirs are gitignored ----------------------------
+for entry in .swarmforge/ .worktrees/; do
+  grep -qxF "$entry" .gitignore 2>/dev/null || echo "$entry" >> .gitignore
+done
+
+echo
+echo "setup-swarm: configured $CONF"
+grep '^window' "$CONF"
+echo
+echo "Next: ./swarm"
