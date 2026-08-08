@@ -111,7 +111,40 @@ Como el gateway es OpenAI-compatible, `codex` CLI podría configurarse vía `~/.
 - `bb test`: 25 tests / 68 aserciones. Los 7 fallos + 9 errores son **idénticos en `main` pristine** (ambiente sin `zsh`/`tmux`); ninguno proviene de este cambio.
 - `--test-parse` con config opencode: valida y genera `roles.tsv`/`sessions.tsv` correctamente, preservando `-m opencode-go/deepseek-v4-flash` por rol.
 
-## 9. Próximos pasos recomendados
+## 9. Recomendación de modelos por rol (fuente: artificialanalysis.ai)
+
+Datos verificados en Artificial Analysis (Intelligence Index v4.1.1, precios API first-party):
+
+| Modelo | Inteligencia | Entrada | Salida | Velocidad | Notas |
+|---|---|---|---|---|---|
+| `kimi-k3` | 60 (#1 open-weights) | $3.00/M | $15.00/M | 41 t/s | El más capaz; caro, lento y verboso |
+| `glm-5.2` | 53 | $1.35/M | $4.29/M | 115 t/s | Empatado con DeepSeek pero ~10x más caro → dominado |
+| `deepseek-v4-flash` | 52 | $0.14/M | $0.28/M | 115 t/s | Rey del valor: ~empate con GLM a 1/10 del precio |
+
+Asignación recomendada (six-pack):
+
+```conf
+window specifier opencode master    task  -m opencode-go/deepseek-v4-flash
+window coder     opencode coder     task  -m opencode-go/kimi-k3
+window cleaner   opencode cleaner   batch -m opencode-go/deepseek-v4-flash
+window architect opencode architect batch -m opencode-go/kimi-k3
+window hardender opencode hardender batch -m opencode-go/deepseek-v4-flash
+window QA        opencode QA        batch -m opencode-go/deepseek-v4-flash
+```
+
+Criterio:
+- `coder` y `architect` concentran el presupuesto (kimi-k3): son los roles donde el razonamiento define el resultado.
+- `specifier`, `cleaner`, `hardender`, `QA` en deepseek-v4-flash: trabajo estructurado/mecánico donde 52 de inteligencia sobra.
+- `glm-5.2` solo como fallback si DeepSeek falla en algo concreto.
+- Excepción QA: si la verificación de UI usa screenshots, subir a `kimi-k3` (único multimodal de los tres; DeepSeek y GLM son texto-only).
+- Experimentación gratis: modelos del tier `opencode` (p. ej. `opencode/deepseek-v4-flash-free`) en roles simples.
+- Alternativa para coder si el costo de K3 pesa: `kimi-k2.7-code` (sin datos en AA; requiere prueba).
+
+Matices:
+- Precios de APIs first-party (Kimi/DeepSeek/Z.AI) según AA; lo que cobre el gateway opencode zen puede diferir. El orden relativo se mantiene.
+- K3 es verboso y lento; los roles batch en K3 serán lentos. Solo architect lo justifica.
+
+## 10. Próximos pasos recomendados
 
 1. Commit/push de `main` al fork (el usuario revisa primero).
 2. Prueba real en un proyecto: exportar `SWARMFORGE_SCRIPTS_URL` al fork, editar `swarmforge.conf` con agentes `opencode` y modelos por rol, lanzar `./swarm`.
