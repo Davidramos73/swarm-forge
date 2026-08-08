@@ -41,8 +41,8 @@ experimental workflows. They are not `get-swarm-forge` products.
 - `git`
 - `tmux`
 - Babashka (`bb`)
-- At least one configured agent backend: `grok`, `codex`, `claude`, or
-  `copilot`
+- At least one configured agent backend: `grok`, `codex`, `claude`,
+  `copilot`, or `opencode`
 
 ## Install the helper
 
@@ -103,7 +103,8 @@ window[-invisible] <role> <backend> <worktree> [task|batch] [forward-only|back-o
   group of queued handoffs together.
 - Propagation defaults to `forward-only`. `back-one` and `back-all` arrange
   merge-only copies for earlier roles after downstream work.
-- Supported backends are `codex`, `grok`, `claude`, and `copilot`; remaining
+- Supported backends are `codex`, `grok`, `claude`, `copilot`, and `opencode`;
+  remaining
   tokens are passed to that backend.
 
 Forge hosts instead use `Lieutenant <backend> [backend arguments...]`.

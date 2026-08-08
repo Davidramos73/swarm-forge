@@ -144,7 +144,7 @@
 
 (def receive-modes #{"task" "batch"})
 (def propagation-modes #{"forward-only" "back-one" "back-all"})
-(def known-agents #{"claude" "codex" "copilot" "grok"})
+(def known-agents #{"claude" "codex" "copilot" "grok" "opencode"})
 
 (defn receive-fields [trailing]
   (let [[receive-mode after-receive]
@@ -523,7 +523,10 @@
                   "grok" (str "grok --cwd " (sq (str role-worktree)) " "
                               (grok-permission-prefix row) (extra-args-prefix row)
                               "--minimal --rules " prompt
-                              (when initial-prompt? (str " --verbatim " prompt)))))
+                              (when initial-prompt? (str " --verbatim " prompt)))
+                  "opencode" (str "opencode " (sq (str role-worktree)) " "
+                                  (extra-args-prefix row)
+                                  (when initial-prompt? (str "--prompt " prompt)))))
       (= index 0)
       (str "; exit_code=$?; SWARMFORGE_TERMINAL_BACKEND=" (sq (:terminal-backend ctx))
            " nohup " (sq (str (fs/path (:script-dir ctx) "swarm-cleanup.sh")))

@@ -376,6 +376,27 @@
       (finally
         (fs/delete-tree root)))))
 
+(deftest opencode-launch-command-passes-initial-prompt
+  ;; Given an opencode pack role with extra backend args
+  ;; When SwarmForge builds the launch command
+  ;; Then opencode gets the worktree, the extra args, and the initial prompt
+  (let [root (tmp-dir)]
+    (try
+      (let [result (run {:dir root}
+                        (script "swarmforge.bb")
+                        "--test-launch-command"
+                        (str root)
+                        "opencode"
+                        "-m opencode-go/kimi-k3")
+            command (:out result)]
+        (is (str/includes? command "opencode "))
+        (is (str/includes? command "-m opencode-go/kimi-k3"))
+        (is (str/includes? command "--prompt \"$(cat "))
+        (is (str/includes? command ".swarmforge/prompts/coder.md"))
+        (is (fs/exists? (fs/path root ".swarmforge/prompts/coder.md"))))
+      (finally
+        (fs/delete-tree root)))))
+
 (deftest start-pack-web-drops-stale-dashboard-url
   ;; Given a leftover dashboard-url and pack_web.pid from a prior run
   ;; When SwarmForge prepares to start the dashboard
