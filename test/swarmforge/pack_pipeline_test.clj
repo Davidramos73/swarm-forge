@@ -530,6 +530,7 @@
                    (queue-handoff! root {:from "coder" :to "cleaner"
                                          :task "pits"
                                          :task-id (first ids)
+                                         :batch-id "batch_20260904T120000Z_000001"
                                          :batch-task-ids ids}))
                  (start-tmux! root roles))]
     (try
@@ -537,6 +538,11 @@
       (is (= "cleaner" (task-lane root "pits")))
       (is (= "cleaner" (task-lane root "bats")))
       (is (= "coder" (task-lane root "unrelated")))
+      (let [delivered (fs/path (pack-worktree root roles "cleaner")
+                               ".swarmforge/handoffs/inbox/new"
+                               (first (inbox-names root roles "cleaner")))]
+        (is (str/includes? (slurp (str delivered))
+                           "batch_id: batch_20260904T120000Z_000001\n")))
       (finally
         (stop-tmux! sock)))))
 (deftest six-pack-qa-broadcast-marks-the-card-done

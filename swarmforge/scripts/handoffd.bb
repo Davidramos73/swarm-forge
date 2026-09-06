@@ -102,7 +102,7 @@
 
 (defn render-message [headers body]
   (let [preferred ["id" "from" "to" "recipient" "priority" "type" "role" "task_id" "task" "commit"
-                   "artifacts" "batch_task_ids" "task_base_commit" "message" "created_at" "enqueued_at" "dequeued_at" "completed_at"]
+                   "artifacts" "batch_id" "batch_task_ids" "task_base_commit" "message" "created_at" "enqueued_at" "dequeued_at" "completed_at"]
         remaining (->> (keys headers)
                        (remove (set preferred))
                        sort)
@@ -254,9 +254,15 @@
   (let [value (get headers "batch_task_ids")
         parsed (parsed-batch-task-ids headers)]
     (or (str/blank? value)
-        (and (next parsed)
+        (and (seq parsed)
              (= parsed (vec (distinct parsed)))
              (= (task-key headers) (first parsed))))))
+
+(defn valid-batch-id? [headers]
+  (let [batch-id (get headers "batch_id")]
+    (or (str/blank? batch-id)
+        (and (safe-paths/state-key? batch-id)
+             (seq (parsed-batch-task-ids headers))))))
 
 (defn batch-task-keys [headers]
   (let [parsed (parsed-batch-task-ids headers)]
@@ -517,6 +523,9 @@
     (when (and (= "git_handoff" (get headers "type"))
                (not (valid-batch-task-ids? headers)))
       (throw (permanent-error "invalid batch_task_ids header")))
+    (when (and (= "git_handoff" (get headers "type"))
+               (not (valid-batch-id? headers)))
+      (throw (permanent-error "invalid batch_id header")))
     (when (and (= "git_handoff" (get headers "type"))
                (fs/regular-file? (board-file)))
       (doseq [key (batch-task-keys headers)]

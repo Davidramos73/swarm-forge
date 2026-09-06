@@ -75,8 +75,10 @@ message: <one line, max 80 chars>
 - If it prints `TASK: <path>`, treat the printed `PAYLOAD` as the task.
 - If it prints `TASK_NAME: <name>`, use that as the stable task name for any
   work you forward from that task.
-- If it prints `BATCH: <path>`, treat each printed `BATCH_ITEM` as part of the
-  current batch in helper-delivered order.
+- If it prints `BATCH: <path>`, treat the declared batch and every printed
+  `BATCH_ITEM` as one atomic work unit. Complete every member, make one combined
+  result commit, and send one outgoing handoff for the whole batch. Never
+  complete or forward one member separately.
 - Use only the task information printed by the helper scripts.
 - If a tmux wake-up arrives while already working on a task, ignore it,
   except a lieutenant stop. If the pane says the lieutenant stopped

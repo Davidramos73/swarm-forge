@@ -1043,9 +1043,64 @@
       (is (str/includes? (str content) "task: Command syntax\n"))
       (is (= "[\"command-id\" \"validate-id\"]"
              (header queued "batch_task_ids")))
+      (is (= "batch_20260824T182225Z_000001"
+             (header queued "batch_id")))
       (is (= 1 (board-audit-count root "Command syntax")))
       (is (= 1 (board-audit-count root "validate")))
       (is (not (str/includes? (str content) "task: HTW\n"))))))
+
+(deftest swarm-handoff-rejects-a-result-missing-a-batch-member-commit
+  (let [root (tmp-dir)
+        base (init-repo! root)
+        _ (setup-project! root {"sender" "batch" "receiver" "task"})
+        _ (write-file (fs/path root "adaptive.md") "adaptive\n")
+        _ (run {:dir root} "git" "add" "adaptive.md")
+        _ (run {:dir root} "git" "commit" "-q" "-m" "Adaptive result")
+        adaptive (str/trim (:out (run {:dir root} "git" "rev-parse" "HEAD")))
+        _ (run {:dir root} "git" "branch" "complete-batch")
+        _ (run {:dir root} "git" "checkout" "-q" "complete-batch")
+        _ (write-file (fs/path root "tactical.md") "tactical\n")
+        _ (run {:dir root} "git" "add" "tactical.md")
+        _ (run {:dir root} "git" "commit" "-q" "-m" "Tactical result")
+        tactical (str/trim (:out (run {:dir root} "git" "rev-parse" "HEAD")))
+        _ (run {:dir root} "git" "checkout" "-q" "master")
+        batch-id "batch_20260904T120000Z_000001"
+        batch (fs/path root ".swarmforge/handoffs/inbox/in_process" batch-id)
+        members [{:file "50_adaptive.handoff" :handoff-id "adaptive"
+                  :task "adaptive" :task-id "adaptive-id" :task-ids ["adaptive-id"]
+                  :from "coder" :type "git_handoff" :commit adaptive :merge-from "coder"}
+                 {:file "50_tactical.handoff" :handoff-id "tactical"
+                  :task "tactical" :task-id "tactical-id" :task-ids ["tactical-id"]
+                  :from "coder" :type "git_handoff" :commit tactical :merge-from "coder"}]
+        _ (fs/create-dirs batch)
+        _ (write-file (fs/path batch "50_adaptive.handoff")
+                      (handoff {:id "adaptive" :from "coder" :to "sender" :recipient "sender"
+                                :priority "50" :type "git_handoff" :task-id "adaptive-id"
+                                :task "adaptive" :commit adaptive :task-base-commit base}))
+        _ (write-file (fs/path batch "50_tactical.handoff")
+                      (handoff {:id "tactical" :from "coder" :to "sender" :recipient "sender"
+                                :priority "50" :type "git_handoff" :task-id "tactical-id"
+                                :task "tactical" :commit tactical :task-base-commit base}))
+        _ (write-file (fs/path batch "batch_manifest.edn")
+                      (str (pr-str {:version 1 :batch-id batch-id
+                                    :task-ids ["adaptive-id" "tactical-id"]
+                                    :members members :selected-commit tactical
+                                    :selected-from "coder"}) "\n"))
+        _ (write-file (fs/path root ".swarmforge/board/tasks.tsv")
+                      (str "adaptive\tsender\tcreated\tupdated\tadaptive-id\n"
+                           "tactical\tsender\tcreated\tupdated\ttactical-id\n"))
+        draft (fs/path root "tmp" "partial-batch.handoff")]
+    (write-file draft "type: git_handoff\nto: receiver\npriority: 50\ntask: adaptive\n")
+    (let [result (run {:dir root :env {"SWARMFORGE_ROLE" "sender"} :ok? false}
+                      (script "swarm_handoff.sh") (str draft))]
+      (is (= 2 (:exit result)))
+      (is (str/includes? (:err result) "is incomplete for batch"))
+      (is (fs/directory? batch))
+      (is (fs/regular-file? draft))
+      (is (empty? (outbox-handoffs root)))
+      (is (= ["adaptive\tsender\tcreated\tupdated\tadaptive-id"
+              "tactical\tsender\tcreated\tupdated\ttactical-id"]
+             (str/split-lines (read-file (fs/path root ".swarmforge/board/tasks.tsv"))))))))
 
 (deftest swarm-handoff-preserves-a-propagated-batch-through-task-mode
   (let [root (tmp-dir)

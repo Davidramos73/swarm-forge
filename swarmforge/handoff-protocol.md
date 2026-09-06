@@ -75,7 +75,9 @@ agent-facing receive helpers read that runtime file rather than reparsing
 
 Use `batch` for a configured role that should consume queued handoffs sharing
 priority, card type, and reverse/forward direction with the first file as one
-unit. The active assignment belongs in `swarmforge.conf`.
+unit. The receiver records the unit in `batch_manifest.edn`; every member must
+be completed and forwarded in one result handoff. The active assignment belongs
+in `swarmforge.conf`.
 
 ## Filename Format
 
@@ -257,6 +259,10 @@ Responsibilities:
 - Canonicalize valid commit abbreviations.
 - Generate `role` from the current sender role for `git_handoff`.
 - Preserve `task` from the draft for `git_handoff`.
+- When current work is a batch, reject a result commit that does not contain
+  every incoming member commit. Generate `batch_id` and the complete
+  `batch_task_ids` membership from the receiver's manifest; agents cannot
+  supply or narrow either field.
 - On the first valid `git_handoff` call, record the exact candidate under
   `.swarmforge/handoffs/audit_pending/`, print `AUDIT_REQUIRED`, and leave the
   draft and current inbox item in place. Atomically increment the board card's
@@ -298,6 +304,8 @@ created_at
 enqueued_at
 dequeued_at
 completed_at
+batch_id
+batch_task_ids
 ```
 
 Validation errors should be explicit enough for an agent to repair the draft.
@@ -479,11 +487,19 @@ Responsibilities:
 - Select every queued handoff that shares priority, card type, and
   reverse/forward with that first file. Equal priority of a different
   type or direction stays queued.
+- Resolve every incoming Git commit and select the unique commit that contains
+  every other member commit in its ancestry. Reject a non-linear set before
+  moving or merging anything.
 - Move those files into one `inbox/in_process/batch_<timestamp>_<suffix>/`
   directory.
 - Add or update `dequeued_at` on each selected file.
-- Print the accepted batch path, count, the top item's `TASK_NAME`, priority,
-  and each task payload in helper-delivered order.
+- Persist `batch_manifest.edn` with the batch ID, ordered membership, task IDs,
+  incoming commits, and selected complete commit before attempting the merge.
+- Print the batch ID, complete membership, selected commit, atomic completion
+  rule, and each task payload before attempting the merge. Print that same
+  declaration when resuming after a conflict.
+- Merge the selected complete commit once. Do not merge every member commit in
+  filename order.
 - Print `NO_TASK` if no inbox item is available.
 - Refuse ambiguous states, such as multiple in-process batches, unless an
   explicit repair is made outside the helper.
@@ -496,7 +512,7 @@ Responsibilities:
 - Require exactly one batch directory in `inbox/in_process/`.
 - Refuse to run if `inbox/in_process/` contains a single task file.
 - Add or update `completed_at` on each file in the batch.
-- Move the batch directory to `inbox/completed/`.
+- Move the batch directory, including its manifest, to `inbox/completed/`.
 - Print the completed task paths and completed batch path.
 - Archive the completing role's pane.
 - Print `MAIL_WAITING` if `inbox/new/` still has handoffs, otherwise `NO_TASK`.
@@ -527,8 +543,9 @@ Prompts should instruct agents to follow this loop:
    your role.
 3. If it prints `NO_TASK`, stop waiting for work.
 4. If it prints `TASK: <path>`, treat the printed `PAYLOAD` as the task.
-5. If it prints `BATCH: <path>`, treat each printed `BATCH_ITEM` as part of the
-   current batch in helper-delivered order.
+5. If it prints `BATCH: <path>`, treat the declared batch and every printed
+   `BATCH_ITEM` as one atomic work unit. Complete all members, create one
+   combined result commit, and send one outgoing handoff for the unit.
 6. Use only the task information printed by the helper scripts.
 7. If a tmux wake-up arrives while already working on a task, ignore it.
 8. When the task or batch is fully complete, run `done_with_current.sh`.
@@ -558,6 +575,8 @@ to
 recipient
 priority
 type
+batch_id
+batch_task_ids
 created_at
 enqueued_at
 dequeued_at
@@ -567,7 +586,8 @@ completed_at
 Lifecycle ownership:
 
 - `swarm_handoff.sh` writes `id`, `from`, `to`, `priority`, `type`, and
-  `created_at`.
+  `created_at`; for current batch work it also writes `batch_id` and the full
+  `batch_task_ids` membership after verifying all incoming commits.
 - `handoffd` writes `recipient` and `enqueued_at` into each recipient copy.
 - `ready_for_next_task.sh` writes `dequeued_at`.
 - `ready_for_next_batch.sh` writes `dequeued_at`.
