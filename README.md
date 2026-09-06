@@ -65,7 +65,7 @@ this branch carries the copies required for a standalone lieutenant install.
 The host configuration contains one `Lieutenant` line. In this branch it is:
 
 ```conf
-Lieutenant grok
+Lieutenant codex
 ```
 
 That line selects the host agent backend and any additional CLI arguments. The

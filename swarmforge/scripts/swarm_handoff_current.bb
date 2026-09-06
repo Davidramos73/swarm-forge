@@ -258,13 +258,23 @@
       "back-all" (vec earlier)
       [])))
 
+(defn terminal-sender? [headers sender]
+  (and (= "git_handoff" (get headers "type"))
+       (let [card (or (board-card-named (get headers "task"))
+                      (first (board-cards-in-lane sender)))]
+         (if card
+           (card-type/last-on-card? (project-root) (:type card) sender)
+           (last-pack-role? sender)))))
+
+(defn with-delivery-kind [headers sender]
+  (if (= "git_handoff" (get headers "type"))
+    (assoc headers "delivery_kind" (if (terminal-sender? headers sender)
+                                      "terminal"
+                                      "forward"))
+    headers))
+
 (defn with-non-forwarding [headers sender]
-  (if (and (= "git_handoff" (get headers "type"))
-           (let [card (or (board-card-named (get headers "task"))
-                          (first (board-cards-in-lane sender)))]
-             (if card
-               (card-type/last-on-card? (project-root) (:type card) sender)
-               (last-pack-role? sender))))
+  (if (terminal-sender? headers sender)
     (assoc headers "non-forwarding" "true")
     headers))
 

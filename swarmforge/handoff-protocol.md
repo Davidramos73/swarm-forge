@@ -134,6 +134,7 @@ type: git_handoff
 role: coder
 task: task-1-cave-setup
 commit: a1b2c3d9e8
+delivery_kind: forward
 created_at: 2026-06-15T14:05:31Z
 enqueued_at: 2026-06-15T14:05:32Z
 
@@ -187,6 +188,16 @@ the route. Startup validates the routes and writes `.swarmforge/routes.tsv`;
 the board, handoff gate, receive guard, and daemon all read that normalized
 description.
 
+The helper adds the reserved `delivery_kind` header to every generated Git
+handoff:
+
+- `forward` is the one card-moving delivery to the next configured role.
+- `reverse` is a merge-only propagation copy to an earlier role.
+- `terminal` is the one completion broadcast from the final role.
+
+Only a nonterminal `forward` may generate `back-one` or `back-all` reverse
+copies. A terminal delivery never generates additional propagation copies.
+
 #### Terminal broadcast
 
 The terminal handoff is the last role **on this card's chain** sending
@@ -194,7 +205,10 @@ The terminal handoff is the last role **on this card's chain** sending
 before the card's starting lane). That set, not a count of names,
 marks the card Done. Each recipient merges that commit
 (`merge_and_process.sh`) and stops; they do not re-forward. A partial
-`to:` list is not terminal.
+`to:` list is not terminal and the daemon rejects it. The daemon marks the
+card Done only for `delivery_kind: terminal` with that exact recipient set.
+For compatibility during an upgrade, an unclassified handoff is terminal only
+when the sender is final and its recipients are already that exact set.
 
 The terminal recipient set is derived from the project's configured window
 order and the final role on this card's route. Current role names and routes
@@ -258,6 +272,8 @@ Responsibilities:
 - Validate `git_handoff` commits as real, unambiguous commits.
 - Canonicalize valid commit abbreviations.
 - Generate `role` from the current sender role for `git_handoff`.
+- Generate the reserved `delivery_kind` from the sender's position and the
+  delivery being written.
 - Preserve `task` from the draft for `git_handoff`.
 - When current work is a batch, reject a result commit that does not contain
   every incoming member commit. Generate `batch_id` and the complete
@@ -304,6 +320,7 @@ created_at
 enqueued_at
 dequeued_at
 completed_at
+delivery_kind
 batch_id
 batch_task_ids
 ```
@@ -366,6 +383,8 @@ Responsibilities:
   copy is a permanent failure.
 - Add `recipient` and `enqueued_at` to each recipient copy.
 - Update the board only after every recipient has a stored copy.
+- Require a terminal delivery to name the exact configured upstream recipient
+  set; only that single delivery can move a card or batch to Done.
 - Archive the sender's completed inbox work, then move the original outbox file
   to `sent/`.
 - Send a generic tmux wake-up message to each recipient after delivery commits.
@@ -379,6 +398,10 @@ Responsibilities:
   stored handoff into a failed delivery.
 - Resume unfinished delivery and wake-up retries after daemon restart without
   duplicating recipient copies.
+- Track active reverse and terminal integration across outboxes and recipient
+  `inbox/new/` and `inbox/in_process/` queues. When the last such handoff leaves
+  active state, write one durable `reverse-cleared` event for the cycle and wake
+  the lieutenant to reconsider waiting cards.
 
 The tmux message should not name the delivered file. It should avoid biasing the
 recipient toward one file and should force queue-order processing.
@@ -577,6 +600,7 @@ priority
 type
 batch_id
 batch_task_ids
+delivery_kind
 created_at
 enqueued_at
 dequeued_at
@@ -585,7 +609,8 @@ completed_at
 
 Lifecycle ownership:
 
-- `swarm_handoff.sh` writes `id`, `from`, `to`, `priority`, `type`, and
+- `swarm_handoff.sh` writes `id`, `from`, `to`, `priority`, `type`,
+  `delivery_kind`, and
   `created_at`; for current batch work it also writes `batch_id` and the full
   `batch_task_ids` membership after verifying all incoming commits.
 - `handoffd` writes `recipient` and `enqueued_at` into each recipient copy.
@@ -609,6 +634,7 @@ Runtime files:
 .swarmforge/daemon/
   handoffd.pid
   handoffd.log
+  reverse-cycle.edn
   stop
 ```
 

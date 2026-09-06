@@ -120,6 +120,7 @@
       (with-board-task sender)
       with-batch-task-ids
       (fill-card-type sender)
+      (with-delivery-kind sender)
       (with-non-forwarding sender)
       fill-priority))
 
