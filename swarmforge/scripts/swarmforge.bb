@@ -162,6 +162,14 @@
   (when (seq tokens)
     (str/join " " tokens)))
 
+(defn model-of
+  "Modelo que el rol fija en swarmforge.conf: el token que sigue a -m o --model.
+  Devuelve \"default\" cuando el rol no fija ninguno y usa el del backend."
+  [extra-args]
+  (let [tokens (remove str/blank? (str/split (or extra-args "") #"\s+"))]
+    (or (second (drop-while #(not (#{"-m" "--model"} %)) tokens))
+        "default")))
+
 (defn reject-if [pred message]
   (when pred (config-fail! message)))
 
@@ -250,7 +258,7 @@
   (spit (str (:roles-file ctx))
         (apply str
                (for [row (:roles ctx)]
-                 (format "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
+                 (format "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
                          (:role row)
                          (:worktree-name row)
                          (:worktree-path row)
@@ -258,7 +266,8 @@
                          (:display-name row)
                          (:agent row)
                          (:receive-mode row)
-                         (:propagation row))))))
+                         (:propagation row)
+                         (model-of (:extra-args row)))))))
 
 (def required-helpers
   ["handoff_lib.bb" "swarm_handoff.sh" "swarm_handoff.bb"

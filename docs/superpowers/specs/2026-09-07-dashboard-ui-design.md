@@ -1,6 +1,6 @@
 # Dashboard: provider/modelo por rol y más sitio para el contenido
 
-Fecha: 2026-09-07 · Estado: aprobado, pendiente de implementar
+Fecha: 2026-09-07 · Estado: implementado en `feat/dashboard-provider-modelo-repo-branch`
 Repo: `Davidramos73/swarm-forge` (rama `main`)
 
 ## Problema
@@ -49,9 +49,11 @@ Añadir al final es seguro, **verificado**: los 13 consumidores de `roles.tsv`
 acceden por posición desde el principio y se protegen con guardas
 `(>= (count cols) N)` — `commit_msg_hook.bb:38`, `handoff_lib.bb:52`,
 `pack_dashboard_request.bb:64`, `swarm_handoff.bb:274`. Ninguno exige 8 columnas
-exactas. `pack_web.bb:112-114` parte en vector e indexa. El test
+exactas. `pack_web.bb:112-114` parte en vector e indexa. **Corrección de la investigación previa:** se afirmaba que el test
 `swarmforge-parses-propagation-tokens` (`script_test.clj:295`) usa
-`str/includes?`, no igualdad exacta, así que tampoco rompe.
+`str/includes?` y por eso no rompía. Usa `str/ends-with?` en tres de sus cuatro
+assertions y **sí rompe**: hubo que actualizarlas para esperar la novena
+columna.
 
 **b) `pack_web.bb`** — exponer `agent` y `model` en el payload que consume el
 Work Queue.
@@ -113,6 +115,31 @@ ilegible.
 
 Todo esto sale de las variables del `:root` y de tres reglas, así que es
 reversible con facilidad.
+
+## Cambio 4 — Repo y branch de la task
+
+### Problema
+
+El dashboard no dice sobre qué repositorio ni sobre qué rama trabaja la task.
+Con varios swarms en paralelo no hay forma de saber si esa task toca
+`concilia_docker` o `concilia_llm_docker`, ni de qué rama salió. Ya nos pasó
+lanzar un swarm desde la base equivocada y no notarlo hasta mucho después.
+
+### Diseño
+
+`pack_web.bb` calcula el par a partir del worktree **master**, que es el árbol
+del proyecto: los roles tienen su propia rama (`swarmforge-coder`, etc.), pero
+lo que le interesa al operador es de dónde salió la task.
+
+- `git remote get-url origin` → repo, recortado a `owner/repo`.
+- `git rev-parse --abbrev-ref HEAD` → branch.
+
+Ambas llamadas van envueltas en `git-line`, que devuelve `""` si git falla: el
+dashboard no puede romperse porque el worktree todavía no exista. Se exponen
+como `repo` y `branch` en `dashboard-state`, y se muestran en `pack-meta`,
+junto a `master = …`.
+
+No se añade estado nuevo: los datos salen de git en cada refresco.
 
 ## Verificación
 

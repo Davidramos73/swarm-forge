@@ -576,6 +576,12 @@
 (defn backend-name [row]
   (str/lower-case (or (nth row 5 nil) "")))
 
+(defn model-name
+  "Novena columna de roles.tsv. Vacía en proyectos creados antes de que
+  swarmforge.bb la escribiera, así que el dashboard debe tolerar el hueco."
+  [row]
+  (str/trim (or (nth row 8 nil) "")))
+
 (defn drop-mail-lines [text]
   (->> (str/split-lines (or text ""))
        (remove mail-banner?)
@@ -611,11 +617,13 @@
 (defn cards-in-lane [all-tasks lane]
   (filterv #(= lane (:lane %)) all-tasks))
 
-(defn queue-row [role names batch-names busy? alive? activity updated]
+(defn queue-row [role names batch-names busy? alive? activity updated agent model]
   {:task (or (first names) "")
    :tasks (vec names)
    :batch_tasks (vec batch-names)
    :role role
+   :agent (or agent "")
+   :model (or model "")
    :state (role-queue-state alive? busy?)
    :updated_at (or updated "")
    :activity activity})
@@ -654,7 +662,9 @@
         batch-names (in-process-batch-task-names row)]
     (queue-row role names batch-names busy? alive?
                (role-heat root role (or alive? (some? *pane-text*)) text (backend-name row))
-               (or (:updated_at from-file) (:updated_at card) ""))))
+               (or (:updated_at from-file) (:updated_at card) "")
+               (backend-name row)
+               (model-name row))))
 
 (defn work-in-flight [root]
   (let [socket (tmux-socket root)
@@ -746,10 +756,43 @@
                (when-not (str/ends-with? text "\n") "\n")))
     id))
 
+(defn git-line
+  "Ejecuta git en el worktree y devuelve la primera línea, o \"\" si falla.
+  El dashboard no debe romperse porque el worktree no exista todavía."
+  [dir & args]
+  (try
+    (let [result (apply sh (concat ["git" "-C" (str dir)] args))]
+      (if (zero? (:exit result))
+        (str/trim (or (:out result) ""))
+        ""))
+    (catch Exception _ "")))
+
+(defn repo-name
+  "Nombre corto del repo a partir de la URL del remoto: owner/repo sin .git."
+  [url]
+  (if (str/blank? url)
+    ""
+    (-> url
+        (str/replace #"\.git$" "")
+        (str/split #"[:/]")
+        (->> (take-last 2) (str/join "/")))))
+
+(defn project-source
+  "Repo y branch sobre los que trabaja la task: los del worktree master, que es
+  el árbol del proyecto. Los roles tienen su propia rama de trabajo; lo que le
+  interesa al operador es de dónde salió la task."
+  [root]
+  (let [dir (or (some-> (master-row root) (nth 2 nil)) (str root))]
+    {:repo (repo-name (git-line dir "remote" "get-url" "origin"))
+     :branch (git-line dir "rev-parse" "--abbrev-ref" "HEAD")}))
+
 (defn dashboard-state [root]
-  (let [master (master-role root)]
+  (let [master (master-role root)
+        source (project-source root)]
     {:master_role master
      :master_display (display-name-for-role master)
+     :repo (:repo source)
+     :branch (:branch source)
      :lanes (lanes root)
      :tasks (tasks root)
      :approvals (approvals root)

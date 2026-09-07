@@ -58,6 +58,10 @@ Al rebasar, los conflictos se concentran en estos puntos:
 | Test del comando de arranque | `test/swarmforge/script_test.clj` — `opencode-launch-command-passes-initial-prompt` |
 | Menciones de backends soportados | `README.md` |
 | Investigación de la integración | `OPEN_CODE_INTEGRATION_RESEARCH.md` (archivo propio) |
+| Novena columna (modelo) en `roles.tsv` | `swarmforge/scripts/swarmforge.bb` — `model-of` y `write-roles-file!` |
+| Assertions del formato de `roles.tsv` | `test/swarmforge/script_test.clj` — `swarmforge-parses-propagation-tokens` |
+| `agent`, `model`, `repo` y `branch` en el payload | `swarmforge/scripts/pack_web.bb` — `model-name`, `queue-row`, `project-source`, `dashboard-state` |
+| Modelo por rol, repo/branch y layout del board | `swarmforge/scripts/pack/dashboard.html` — `workRow`, `renderChrome`, `.attention`, `.col`, `.card` |
 | Script de instalación de swarms opencode | `setup-swarm` (archivo propio) |
 | Permiso `external_directory` de opencode | `swarmforge/scripts/swarmforge.bb` — `ensure-opencode-external-reads!`, llamada desde `launch-role!` |
 | Adaptador de GNOME Terminal | `swarmforge/scripts/terminal-adapters/gnome-terminal.sh` (propio) y dos inserciones en `swarmforge/scripts/swarm-terminal-adapter.sh` |

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SwarmForge Pack</title>
 <style>
-:root{--bg:#eef0eb;--panel:#fbfbf8;--ink:#1e221f;--muted:#68726c;--line:#d5d9d2;--line-soft:#e8ebe5;--accent:#3d5a45;--amber:#c9851a;--amber-bg:#fff6e5;--red:#9b1c1c;--green:#2f6b3a;--green-bg:#e7f3ea;--chip:#e8eee9;--card:#fffef9;--rail:340px;--card-min-w:148px;--card-min-h:72px;--card-max-w:200px;font-family:ui-sans-serif,system-ui,sans-serif}
+:root{--bg:#eef0eb;--panel:#fbfbf8;--ink:#1e221f;--muted:#68726c;--line:#d5d9d2;--line-soft:#e8ebe5;--accent:#3d5a45;--amber:#c9851a;--amber-bg:#fff6e5;--red:#9b1c1c;--green:#2f6b3a;--green-bg:#e7f3ea;--chip:#e8eee9;--card:#fffef9;--rail:340px;--card-min-w:148px;--card-min-h:72px;--card-max-w:320px;font-family:ui-sans-serif,system-ui,sans-serif}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{background:#cfd4cc;color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .cockpit{flex:1;min-width:0;min-height:0;width:calc(100% - 20px);margin:10px;background:var(--bg);border:1px solid #b8bfb6;border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
@@ -26,9 +26,11 @@ header.top h1{margin:0;font-size:15px}.meta{color:var(--muted);font-size:12px}.m
 .btn:disabled,.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
 .btn:disabled:hover,.btn[disabled]:hover{background:#fff;border-color:#9aa59e;color:var(--ink)}
 .btn-approve:disabled:hover,.btn-approve[disabled]:hover{background:#2f6b3a;border-color:#2f6b3a;color:#fff}
-.attention{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;padding:8px 14px;background:var(--amber-bg);border-bottom:1px solid #efd7a8;font-size:12px;max-height:120px;overflow:auto;position:relative;z-index:30}
+.attention{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;padding:10px 14px;background:var(--amber-bg);border-bottom:1px solid #efd7a8;font-size:13px;max-height:40vh;overflow:auto;position:relative;z-index:30}
+.wif-model{font-size:10px;color:var(--muted);line-height:1.3;margin-top:1px;overflow-wrap:anywhere}
+.pack-source{color:var(--muted)}
 .attention .tag{font-weight:700;text-transform:uppercase;font-size:10px;color:#8a5a0a;padding-top:4px}
-.att-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:rgba(255,255,255,.65);border:1px solid #efd7a8;border-radius:6px;padding:4px 8px;margin:0 0 4px}
+.att-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:rgba(255,255,255,.65);border:1px solid #efd7a8;border-radius:6px;padding:6px 10px;margin:0 0 6px}
 .att-work{text-decoration:underline}
 .att-work .att-project{font-weight:700}
 .menu{position:relative;display:inline-block}
@@ -58,11 +60,11 @@ header.top h1{margin:0;font-size:15px}.meta{color:var(--muted);font-size:12px}.m
 .pack-radios{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:12px}
 #np-conf{min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace}
 .columns{display:flex;gap:12px;align-items:stretch;min-width:min-content;flex:1;min-height:0}
-.col{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;min-height:0;max-height:100%}
+.col{flex:1 1 0;display:flex;flex-direction:column;align-items:stretch;min-width:var(--card-min-w);min-height:0;max-height:100%}
 .col h3{margin:0 0 8px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.col-body{display:flex;flex-direction:column;align-items:flex-start;gap:8px;flex:1;min-height:100px;overflow:auto;padding:8px;background:rgba(255,255,255,.35);border:1px dashed #c5cbc2;border-radius:10px;width:max-content;min-width:var(--card-min-w)}
-.batch{display:flex;flex-direction:column;gap:0;width:max-content;min-width:var(--card-min-w)}
-.card{background:var(--card);border:1px solid #d0cbb8;border-radius:8px;padding:7px 8px;font-size:11px;width:max-content;max-width:var(--card-max-w);min-width:var(--card-min-w);min-height:var(--card-min-h);cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.col-body{display:flex;flex-direction:column;align-items:stretch;gap:8px;flex:1;min-height:100px;overflow:auto;padding:8px;background:rgba(255,255,255,.35);border:1px dashed #c5cbc2;border-radius:10px;width:100%;min-width:var(--card-min-w)}
+.batch{display:flex;flex-direction:column;gap:0;width:100%;min-width:var(--card-min-w)}
+.card{background:var(--card);border:1px solid #d0cbb8;border-radius:8px;padding:7px 8px;font-size:11px;width:100%;max-width:var(--card-max-w);min-width:var(--card-min-w);min-height:var(--card-min-h);cursor:pointer;display:flex;flex-direction:column;gap:3px}
 .card-merging{background:#fff7c2;border-color:#e6d36a}
 .card:hover{border-color:#a89f7e}
 .card-merging:hover{border-color:#c9b24a}
@@ -424,6 +426,15 @@ function renderChrome(data) {
   dot.className = "dot";
   dot.textContent = "●";
   $("pack-meta").append(dot, " live · master = " + master);
+  const repo = (data.repo || "").trim();
+  const branch = (data.branch || "").trim();
+  if (repo || branch) {
+    const src = document.createElement("span");
+    src.className = "pack-source";
+    src.textContent = [repo, branch].filter(Boolean).join(" · ");
+    src.title = "repo y branch sobre los que trabaja esta task";
+    $("pack-meta").append(" ", src);
+  }
   $("btn-open-master-rail").textContent = "Open " + master;
   $("btn-open-master-rail").setAttribute("data-open-agent", masterRole);
   $("master-title").textContent = master;
@@ -516,6 +527,16 @@ function workRow(item) {
     therm.appendChild(bar);
   }
   role.append(link, therm);
+  const backend = (item.agent || "").trim();
+  const model = (item.model || "").trim();
+  if (backend || model) {
+    const prov = document.createElement("div");
+    prov.className = "wif-model";
+    // model queda vacío en proyectos creados antes de la 9ª columna de roles.tsv
+    prov.textContent = model && model !== "default" ? backend + " · " + model : backend;
+    prov.title = model === "default" ? backend + " (modelo por defecto del backend)" : prov.textContent;
+    role.append(prov);
+  }
   const state = document.createElement("td");
   state.appendChild(stateIcon(item.state));
   const ageCell = document.createElement("td");

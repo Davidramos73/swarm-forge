@@ -320,10 +320,12 @@
         (is (str/includes? out "batch back-all --allow-all-tools"))
         (let [roles (slurp (str (fs/path root ".swarmforge/roles.tsv")))
               lines (str/split-lines roles)]
-          (is (str/ends-with? (first lines) "\ttask\tforward-only"))
+          ;; La 9ª columna es el modelo: el token tras -m/--model, o "default".
+          ;; Ningún rol de este caso fija modelo, así que los cuatro son "default".
+          (is (str/ends-with? (first lines) "\ttask\tforward-only\tdefault"))
           (is (str/includes? (nth lines 1) "\ttask\tforward-only"))
-          (is (str/ends-with? (nth lines 2) "\ttask\tback-one"))
-          (is (str/ends-with? (nth lines 3) "\tbatch\tback-all"))))
+          (is (str/ends-with? (nth lines 2) "\ttask\tback-one\tdefault"))
+          (is (str/ends-with? (nth lines 3) "\tbatch\tback-all\tdefault"))))
       (finally
         (fs/delete-tree root)))))
 
