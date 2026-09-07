@@ -469,11 +469,12 @@
   ;; Given each pack backend
   ;; When SwarmForge builds the launch command
   ;; Then Codex and Copilot use --no-alt-screen, Claude disables the
-  ;; alternate screen, and Grok keeps --minimal
+  ;; alternate screen, Grok keeps --minimal, and opencode uses --mini
   (doseq [[agent needle] [["codex" "--no-alt-screen"]
                           ["copilot" "--no-alt-screen"]
                           ["claude" "CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1"]
-                          ["grok" "--minimal"]]]
+                          ["grok" "--minimal"]
+                          ["opencode" "--mini"]]]
     (let [root (tmp-dir)]
       (try
         (let [command (:out (run {:dir root}
@@ -508,7 +509,8 @@
   (doseq [[agent needle] [["codex" "--yolo"]
                           ["copilot" "--yolo"]
                           ["claude" "--permission-mode bypassPermissions"]
-                          ["grok" "--permission-mode bypassPermissions"]]]
+                          ["grok" "--permission-mode bypassPermissions"]
+                          ["opencode" "--auto"]]]
     (let [root (tmp-dir)]
       (try
         (let [command (:out (run {:dir root}
@@ -519,6 +521,22 @@
           (is (str/includes? command needle) agent))
         (finally
           (fs/delete-tree root))))))
+
+(deftest opencode-launch-command-does-not-repeat-explicit-auto
+  ;; Given an opencode role that already passes --auto in swarmforge.conf
+  ;; When SwarmForge builds the launch command
+  ;; Then --auto appears once, not twice
+  (let [root (tmp-dir)]
+    (try
+      (let [command (:out (run {:dir root}
+                               (script "swarmforge.bb")
+                               "--test-launch-command"
+                               (str root)
+                               "opencode"
+                               "--auto"))]
+        (is (= 1 (count (re-seq #"--auto" command)))))
+      (finally
+        (fs/delete-tree root)))))
 
 (deftest launch-command-puts-project-tool-bin-on-path
   ;; Given a launched role

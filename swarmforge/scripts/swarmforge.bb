@@ -470,6 +470,7 @@
     "codex" (if (extra-has? row "--yolo") "" "--yolo ")
     "copilot" (if (extra-has? row "--yolo") "" "--yolo ")
     "claude" (if (extra-has? row "bypassPermissions") "" "--permission-mode bypassPermissions ")
+    "opencode" (if (extra-has? row "--auto") "" "--auto ")
     ""))
 
 (defn grok-permission-prefix [row]
@@ -525,6 +526,7 @@
                               "--minimal --rules " prompt
                               (when initial-prompt? (str " --verbatim " prompt)))
                   "opencode" (str "opencode " (sq (str role-worktree)) " "
+                                  "--mini " (yolo-flag agent row)
                                   (extra-args-prefix row)
                                   (when initial-prompt? (str "--prompt " prompt)))))
       (= index 0)

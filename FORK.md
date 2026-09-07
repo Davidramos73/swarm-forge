@@ -63,7 +63,14 @@ Al rebasar, los conflictos se concentran en estos puntos:
 
 `opencode` recibe el worktree como argumento posicional (no `-C` ni `--cwd`) y
 el prompt inicial por `--prompt`, respetando `initial-prompt?` y los args extra
-de `swarmforge.conf`.
+de `swarmforge.conf`. Además:
+
+- `--auto` (auto-aprobación) se añade vía `yolo-flag`, como `--yolo` en
+  codex/copilot. Sin él los agentes se bloquean pidiendo permiso y el swarm no
+  avanza. No se duplica si ya lo pasas en `swarmforge.conf`.
+- `--mini` va fijo, como `--minimal` en grok. Verificado en tmux: sin él la TUI
+  completa no deja leer la conversación en `capture-pane`; con él el transcript
+  queda lineal y el dashboard lo puede mostrar.
 
 ## Punteros al repositorio
 
