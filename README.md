@@ -6,8 +6,8 @@ It is a forge installed around projects, not a pack installed inside one
 existing project.
 
 The repository's master branch is named
-[`main`](https://github.com/unclebob/swarm-forge/tree/main). Read its
-[README](https://github.com/unclebob/swarm-forge/blob/main/README.md) for the
+[`main`](https://github.com/Davidramos73/swarm-forge/tree/main). Read its
+[README](https://github.com/Davidramos73/swarm-forge/blob/main/README.md) for the
 SwarmForge overview, prerequisites, product comparison, and installation of
 `get-swarm-forge`. This README covers only the structure and operation of the
 lieutenant forge.
@@ -57,7 +57,7 @@ is the template for new and reopened projects.
 
 The runtime scripts, shared constitution articles, handoff machinery, tmux
 behavior, and installer are common SwarmForge infrastructure. Their canonical
-home and documentation are on [`main`](https://github.com/unclebob/swarm-forge/tree/main);
+home and documentation are on [`main`](https://github.com/Davidramos73/swarm-forge/tree/main);
 this branch carries the copies required for a standalone lieutenant install.
 
 ## Host and project configuration
@@ -172,7 +172,7 @@ This branch carries the three shared articles copied from `main`:
 The lieutenant project pack adds no local constitution article. Its
 specialization is the typed configuration and the six role prompts. Canonical
 documentation for the shared articles and handoff machinery remains on
-[`main`](https://github.com/unclebob/swarm-forge/tree/main).
+[`main`](https://github.com/Davidramos73/swarm-forge/tree/main).
 
 ## Install and start
 
@@ -252,7 +252,7 @@ run in tmux.
 
 For the durable handoff format, audit gate, delivery states, retries, and merge
 rules, see the
-[`main` handoff protocol](https://github.com/unclebob/swarm-forge/blob/main/swarmforge/handoff-protocol.md).
+[`main` handoff protocol](https://github.com/Davidramos73/swarm-forge/blob/main/swarmforge/handoff-protocol.md).
 
 ## Runtime components and generated state
 
