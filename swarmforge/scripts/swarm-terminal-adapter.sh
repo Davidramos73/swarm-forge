@@ -12,6 +12,9 @@ normalize_terminal_backend() {
     terminal|terminal-app|terminal.app)
       echo "terminal-app"
       ;;
+    gnome|gnome-terminal|gnome_terminal)
+      echo "gnome-terminal"
+      ;;
     windows|windows-terminal|wt)
       echo "windows-terminal"
       ;;
@@ -36,6 +39,11 @@ detect_terminal_backend() {
       return
     fi
     echo "terminal-app"
+    return
+  fi
+
+  if has_command gnome-terminal; then
+    echo "gnome-terminal"
     return
   fi
 
