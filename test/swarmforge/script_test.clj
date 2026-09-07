@@ -1,5 +1,6 @@
 (ns swarmforge.script-test
   (:require [babashka.fs :as fs]
+            [cheshire.core :as json]
             [clojure.java.shell :as sh]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]))
@@ -661,6 +662,62 @@
       (finally
         (fs/delete-tree root)
         (fs/delete-tree home)))))
+
+(deftest swarmforge-lets-opencode-read-the-task-document
+  ;; Given an opencode role worktree
+  ;; When startup prepares it
+  ;; Then opencode.json allows reading outside the project directory, once
+  ;; (the task document lives in the master worktree, outside the role's own
+  ;;  tree, and --auto does not cover that category, so the agent stalls on a
+  ;;  permission prompt nobody answers)
+  (let [root (tmp-dir)]
+    (try
+      (doseq [_ [1 2]]
+        (run {:dir root}
+             (script "swarmforge.bb")
+             "--test-ensure-opencode-permission"
+             (str root)))
+      (let [config (json/parse-string (slurp (str (fs/path root "opencode.json"))) true)]
+        (is (= "allow" (get-in config [:permission :external_directory]))))
+      (finally
+        (fs/delete-tree root)))))
+
+(deftest swarmforge-hides-the-opencode-config-from-git
+  ;; Given an opencode role worktree in a repo
+  ;; When startup writes opencode.json into it
+  ;; Then git excludes the file, so an agent running `git add` cannot commit
+  ;; SwarmForge's own config into the project's branch
+  (let [root (tmp-dir)]
+    (try
+      (init-repo! root)
+      (run {:dir root}
+           (script "swarmforge.bb")
+           "--test-ensure-opencode-permission"
+           (str root))
+      (let [status (:out (run {:dir root} "git" "status" "--short"))]
+        (is (not (str/includes? status "opencode.json")) status))
+      (finally
+        (fs/delete-tree root)))))
+
+(deftest swarmforge-keeps-existing-opencode-config
+  ;; Given a worktree that already has an opencode.json with other settings
+  ;; When startup grants the external-directory permission
+  ;; Then the existing keys survive and sibling permissions are untouched
+  (let [root (tmp-dir)]
+    (try
+      (write-file (fs/path root "opencode.json")
+                  (json/generate-string {:model "opencode-go/kimi-k3"
+                                         :permission {:bash "ask"}}))
+      (run {:dir root}
+           (script "swarmforge.bb")
+           "--test-ensure-opencode-permission"
+           (str root))
+      (let [config (json/parse-string (slurp (str (fs/path root "opencode.json"))) true)]
+        (is (= "opencode-go/kimi-k3" (:model config)))
+        (is (= "ask" (get-in config [:permission :bash])))
+        (is (= "allow" (get-in config [:permission :external_directory]))))
+      (finally
+        (fs/delete-tree root)))))
 
 (deftest swarm-tool-knows-constitution-tool-names
   ;; Given a pack project

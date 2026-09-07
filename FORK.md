@@ -59,6 +59,7 @@ Al rebasar, los conflictos se concentran en estos puntos:
 | Menciones de backends soportados | `README.md` |
 | Investigación de la integración | `OPEN_CODE_INTEGRATION_RESEARCH.md` (archivo propio) |
 | Script de instalación de swarms opencode | `setup-swarm` (archivo propio) |
+| Permiso `external_directory` de opencode | `swarmforge/scripts/swarmforge.bb` — `ensure-opencode-external-reads!`, llamada desde `launch-role!` |
 | Adaptador de GNOME Terminal | `swarmforge/scripts/terminal-adapters/gnome-terminal.sh` (propio) y dos inserciones en `swarmforge/scripts/swarm-terminal-adapter.sh` |
 
 `opencode` recibe el worktree como argumento posicional (no `-C` ni `--cwd`) y
@@ -71,6 +72,15 @@ de `swarmforge.conf`. Además:
 - `--mini` va fijo, como `--minimal` en grok. Verificado en tmux: sin él la TUI
   completa no deja leer la conversación en `capture-pane`; con él el transcript
   queda lineal y el dashboard lo puede mostrar.
+- Cada worktree de rol con backend `opencode` recibe un `opencode.json` con
+  `permission.external_directory: "allow"`, análogo a `ensure-codex-trust!` para
+  codex. Hace falta porque el documento de la tarea vive en el worktree master,
+  fuera del worktree del rol, y `--auto` no cubre esa categoría: sin esto el
+  agente se queda esperando una aprobación que nadie pulsa. **Tiene que estar
+  dentro del worktree del rol**, no en la raíz del proyecto: opencode deja de
+  subir por el árbol al encontrar un `.git`, y cada worktree tiene el suyo
+  (comprobado con `opencode debug config`). El fichero se añade a
+  `info/exclude` para que ningún agente lo commitee.
 
 ## Punteros al repositorio
 

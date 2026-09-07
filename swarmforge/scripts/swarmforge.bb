@@ -3,6 +3,7 @@
 (ns swarmforge
   (:require [babashka.fs :as fs]
             [babashka.process :as process]
+            [cheshire.core :as json]
             [clojure.string :as str]))
 
 (def session-prefix "swarmforge")
@@ -565,9 +566,34 @@
               (str (ensure-newline text)
                    "\n" header "\ntrust_level = \"trusted\"\n"))))))
 
+(defn ensure-opencode-external-reads! [worktree]
+  "Let opencode read the task document, which lives outside the role worktree.
+
+  SwarmForge writes tasks/<name>.md in the master worktree, but non-master roles
+  run inside .worktrees/<role>, which carries its own .git and is therefore the
+  project root as far as opencode is concerned. Reading the task is an
+  external-directory access, a category --auto does not cover, so the agent
+  stalls on a permission prompt that nobody answers. opencode stops walking up
+  at the git boundary, so the config has to sit in the role worktree itself."
+  (let [file (fs/path worktree "opencode.json")
+        existing (when (fs/exists? file)
+                   (try (json/parse-string (slurp (str file))) (catch Exception _ nil)))
+        config (-> (or existing {})
+                   (assoc "$schema" "https://opencode.ai/config.json")
+                   (update "permission" #(assoc (or % {}) "external_directory" "allow")))]
+    (fs/create-dirs worktree)
+    (spit (str file) (str (json/generate-string config {:pretty true}) "\n"))
+    ;; Keep it out of the project's branch: agents run `git add` and would
+    ;; otherwise commit SwarmForge's own config into the operator's work.
+    (let [exclude (sh-out "git" "-C" (str worktree) "rev-parse" "--git-path" "info/exclude")]
+      (when-not (str/blank? exclude)
+        (ensure-in-file! (fs/path exclude) "opencode.json")))))
+
 (defn launch-role! [ctx index row]
   (when (= "codex" (:agent row))
     (ensure-codex-trust! (:worktree-path row)))
+  (when (= "opencode" (:agent row))
+    (ensure-opencode-external-reads! (:worktree-path row)))
   (let [session (:session row)
         display (:display-name row)
         command (launch-command ctx index row)]
@@ -1081,6 +1107,7 @@
     "--test-agent-start-delay" (println (env-long "SWARMFORGE_AGENT_START_DELAY_MS" 1500))
     "--test-sleep-inhibitor-prefix" (test-sleep-inhibitor-prefix!)
     "--test-ensure-codex-trust" (test-ensure-codex-trust! (second args))
+    "--test-ensure-opencode-permission" (ensure-opencode-external-reads! (second args))
     "--test-reset-pack-web-state" (test-reset-pack-web-state! (second args))
     "--test-tmux-base-indexes" (test-tmux-base-indexes! (second args))
     "--test-create-role-session" (test-create-role-session! (second args) (nth args 2))
