@@ -15,6 +15,10 @@ This repository's master branch is named `main`. It is the landing page,
 installer source, shared runtime, and shared engineering law. It is not itself
 a runnable SwarmForge product.
 
+This is a fork of [`unclebob/swarm-forge`](https://github.com/unclebob/swarm-forge)
+adding support for the `opencode` backend and a GNOME Terminal adapter. See
+[FORK.md](FORK.md) for how to sync it with upstream without losing those changes.
+
 ## Products
 
 | Command | Branch | Shape |
