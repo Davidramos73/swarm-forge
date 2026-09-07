@@ -5,8 +5,8 @@ implementation, refactoring, and architecture without adding the six-pack's
 dedicated hardening and headed-QA roles.
 
 The repository's master branch is named
-[`main`](https://github.com/unclebob/swarm-forge/tree/main). Read its
-[README](https://github.com/unclebob/swarm-forge/blob/main/README.md) for
+[`main`](https://github.com/Davidramos73/swarm-forge/tree/main). Read its
+[README](https://github.com/Davidramos73/swarm-forge/blob/main/README.md) for
 prerequisites, installation of `get-swarm-forge`, and the shared runtime model.
 This README covers only the four-pack's structure and operation.
 
@@ -138,7 +138,7 @@ role order, **Attention** handles the specification gate and clarifications,
 and **Teardown** stops the swarm without deleting the project.
 
 For durable handoff format, audit, retry, and merge details, see the
-[`main` handoff protocol](https://github.com/unclebob/swarm-forge/blob/main/swarmforge/handoff-protocol.md).
+[`main` handoff protocol](https://github.com/Davidramos73/swarm-forge/blob/main/swarmforge/handoff-protocol.md).
 
 ## Changing this branch
 
