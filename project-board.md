@@ -26,7 +26,7 @@ the copy it was born with.
 The dashboard has a **New Project** button. The dialog has:
 
 - **name** — the project directory under **projects**, or, with GitHub
-  checked, `owner/repo` (for example `unclebob/swarm-forge`). The
+  checked, `owner/repo` (for example `Davidramos73/swarm-forge`). The
   directory name is inferred from the last path segment (`swarm-forge`).
 - **github repo** — a checkbox. When checked, that repo is cloned into
   `projects/<inferred-name>` and then treated as the new project.

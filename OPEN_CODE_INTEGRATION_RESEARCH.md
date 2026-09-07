@@ -90,7 +90,7 @@ Como el gateway es OpenAI-compatible, `codex` CLI podría configurarse vía `~/.
 - **Permisos**: la TUI pedirá aprobaciones por defecto. Para modo desatendido agregar `--auto` como `extra-cli-arg` (peligroso, opt-in).
 - **Tamaño del prompt**: se pasa como `--prompt "$(cat file)"`; los shells soportan argumentos grandes, pero conviene observar en la práctica.
 - **TUI dentro de tmux**: opencode es una app de terminal; debería comportarse como claude/codex en tmux, pero la primera ejecución real debe verificarse (colores, input, wake-ups por send-keys).
-- **Propagación a las ramas workflow**: los wrappers `./swarm` de `two-pack`/`four-pack`/`six-pack` descargan los scripts desde `unclebob/swarm-forge@main` por defecto. Para usar este fork hay que exportar `SWARMFORGE_SCRIPTS_URL=https://github.com/Davidramos73/swarm-forge/archive/refs/heads/main.tar.gz` (o copiar `swarmforge/scripts/` manualmente al proyecto).
+- **Propagación a las ramas workflow**: los wrappers `./swarm` de `two-pack`/`four-pack`/`six-pack` (y de `adversaries`/`squad`/`sprint-module-squad`) ya descargan los scripts desde `Davidramos73/swarm-forge@main` por defecto, así que el soporte de opencode llega solo. Para probar otro origen se puede exportar `SWARMFORGE_SCRIPTS_URL`.
 
 ## 8. Cambios aplicados (main, 2026-08-08)
 
