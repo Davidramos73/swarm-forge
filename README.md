@@ -6,8 +6,8 @@ state machine. Unlike the fixed two-, four-, and six-packs, most product agents
 exist only for one assignment and retire afterward.
 
 The repository's master branch is named
-[`main`](https://github.com/unclebob/swarm-forge/tree/main). Read its
-[README](https://github.com/unclebob/swarm-forge/blob/main/README.md) for the
+[`main`](https://github.com/Davidramos73/swarm-forge/tree/main). Read its
+[README](https://github.com/Davidramos73/swarm-forge/blob/main/README.md) for the
 base SwarmForge concepts and prerequisites. `squad` is a separate line of work,
 not a `get-swarm-forge` product, and its squad control plane is owned by this
 branch.
