@@ -538,6 +538,41 @@
       (finally
         (fs/delete-tree root)))))
 
+(deftest first-role-launch-command-runs-cleanup
+  ;; Given the first role in the config, which owns swarm teardown
+  ;; When SwarmForge builds its launch command
+  ;; Then the command chains swarm-cleanup.sh after the agent exits
+  (let [root (tmp-dir)]
+    (try
+      (let [command (:out (run {:dir root}
+                               (script "swarmforge.bb")
+                               "--test-first-role-launch-command"
+                               (str root)
+                               "codex"))]
+        (is (str/includes? command "swarm-cleanup.sh")))
+      (finally
+        (fs/delete-tree root)))))
+
+(deftest first-role-launch-command-parses-in-bash
+  ;; Given a host whose login shell is bash, so tmux opens panes with bash
+  ;; When the first role's launch command is read by an interactive bash
+  ;; Then history expansion does not reject it
+  ;; (zsh's `&!` makes bash abort the whole line with "event not found",
+  ;;  which silently stops the first role from ever starting)
+  (let [root (tmp-dir)]
+    (try
+      (let [command (:out (run {:dir root}
+                               (script "swarmforge.bb")
+                               "--test-first-role-launch-command"
+                               (str root)
+                               "codex"))
+            ;; -i turns history expansion on, -n parses without executing
+            parsed (sh/sh "bash" "-in" :in command)
+            output (str (:out parsed) (:err parsed))]
+        (is (not (str/includes? output "event not found")) output))
+      (finally
+        (fs/delete-tree root)))))
+
 (deftest launch-command-puts-project-tool-bin-on-path
   ;; Given a launched role
   ;; When the start command is built

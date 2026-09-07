@@ -535,7 +535,10 @@
            " " (sq (:tmux-socket ctx))
            " " (sq (str (:window-ids-file ctx)))
            (apply str (map #(str " " (sq (:session %))) (:roles ctx)))
-           " >/dev/null 2>&1 &!; exit $exit_code"))))
+           ;; `&` (not zsh's `&!`): bash panes abort the whole line on `!`
+           ;; via history expansion, so the role never starts. nohup already
+           ;; detaches the cleanup, so disowning it buys nothing.
+           " >/dev/null 2>&1 & exit $exit_code"))))
 
 (defn codex-home []
   (or (not-empty (System/getenv "CODEX_HOME"))
@@ -1019,6 +1022,19 @@
     (fs/create-dirs (:prompts-dir ctx))
     (println (launch-command ctx 1 row))))
 
+(defn test-first-role-launch-command! [root agent & [extra-args]]
+  (let [ctx (assoc (context root) :terminal-backend "none")
+        row {:role "coder"
+             :agent agent
+             :session "swarmforge-coder"
+             :display-name "Coder"
+             :worktree-name "master"
+             :worktree-path (fs/path root)
+             :receive-mode "task"
+             :extra-args extra-args}]
+    (fs/create-dirs (:prompts-dir ctx))
+    (println (launch-command ctx 0 row))))
+
 (defn test-lieutenant-launch-command! [root]
   (let [ctx (assoc (context root) :terminal-backend "none")
         row (assoc (lieutenant-row ctx) :worktree-path (fs/path root))]
@@ -1056,6 +1072,9 @@
     "--test-launch-command" (apply test-launch-command!
                                      (or (second args) (System/getProperty "user.dir"))
                                      (drop 2 args))
+    "--test-first-role-launch-command" (apply test-first-role-launch-command!
+                                              (or (second args) (System/getProperty "user.dir"))
+                                              (drop 2 args))
     "--test-lieutenant-launch-command" (test-lieutenant-launch-command!
                                         (or (second args) (System/getProperty "user.dir")))
     "--test-install-hooks" (test-install-hooks! (second args))
