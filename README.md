@@ -5,8 +5,8 @@ lieutenant and dashboard supervise projects under `projects/`; each project
 runs a selected two-, four-, or six-pack swarm.
 
 The repository's master branch is named
-[`main`](https://github.com/unclebob/swarm-forge/tree/main). Read its
-[README](https://github.com/unclebob/swarm-forge/blob/main/README.md) for the
+[`main`](https://github.com/Davidramos73/swarm-forge/tree/main). Read its
+[README](https://github.com/Davidramos73/swarm-forge/blob/main/README.md) for the
 SwarmForge overview, prerequisites, product comparison, and installation of
 `get-swarm-forge`. This README covers only the project-manager forge.
 
@@ -69,9 +69,9 @@ Each installed pack is configured independently:
 
 | Pack | Default workflow | Details |
 |---|---|---|
-| `two-pack` | `coder` → `cleaner` | [`two-pack` README](https://github.com/unclebob/swarm-forge/blob/two-pack/README.md) |
-| `four-pack` | `specifier` → `coder` → `refactorer` → `architect` | [`four-pack` README](https://github.com/unclebob/swarm-forge/blob/four-pack/README.md) |
-| `six-pack` | `specifier` → `coder` → `cleaner` → `architect` → `hardender` → `QA` | [`six-pack` README](https://github.com/unclebob/swarm-forge/blob/six-pack/README.md) |
+| `two-pack` | `coder` → `cleaner` | [`two-pack` README](https://github.com/Davidramos73/swarm-forge/blob/two-pack/README.md) |
+| `four-pack` | `specifier` → `coder` → `refactorer` → `architect` | [`four-pack` README](https://github.com/Davidramos73/swarm-forge/blob/four-pack/README.md) |
+| `six-pack` | `specifier` → `coder` → `cleaner` → `architect` → `hardender` → `QA` | [`six-pack` README](https://github.com/Davidramos73/swarm-forge/blob/six-pack/README.md) |
 
 The corresponding `packs/<pack>/swarmforge/swarmforge.conf` is the default for
 new projects. New Project shows that configuration in an editable field, so a
@@ -171,7 +171,7 @@ The right-hand chat rail talks to the host lieutenant, not a project agent.
 Open a role from **Work Queue** to inspect that project's live tmux pane.
 
 For shared handoff and runtime details, see the
-[`main` handoff protocol](https://github.com/unclebob/swarm-forge/blob/main/swarmforge/handoff-protocol.md).
+[`main` handoff protocol](https://github.com/Davidramos73/swarm-forge/blob/main/swarmforge/handoff-protocol.md).
 
 ## Runtime components and generated state
 
