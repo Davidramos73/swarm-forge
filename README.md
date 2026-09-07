@@ -6,8 +6,8 @@ persistent agents coordinate short-lived specialists; only one sprint executes
 at a time, while the operator may continue shaping later sprints.
 
 The repository's master branch is named
-[`main`](https://github.com/unclebob/swarm-forge/tree/main). Read its
-[README](https://github.com/unclebob/swarm-forge/blob/main/README.md) for the
+[`main`](https://github.com/Davidramos73/swarm-forge/tree/main). Read its
+[README](https://github.com/Davidramos73/swarm-forge/blob/main/README.md) for the
 base SwarmForge concepts and prerequisites. This branch is not a
 `get-swarm-forge` product and owns its own sprint and squad control plane.
 
