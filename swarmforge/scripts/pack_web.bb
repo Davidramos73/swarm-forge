@@ -188,6 +188,43 @@
                     (Long/parseLong audit-count)
                     0)}))
 
+(def ^:private max-title-chars 120)
+
+(defn clean-title
+  "Deja una línea de markdown lista para mostrarse como título.
+
+  Saca los `#` de encabezado y el prefijo `[CU-1234]` que algunos generadores
+  de tarjetas repiten delante del título, porque el nombre ya se muestra al
+  lado. Devuelve nil si no queda nada útil."
+  [line name]
+  (let [texto (-> (or line "")
+                  (str/replace #"^\s*#+\s*" "")
+                  (str/replace (re-pattern (str "^\\[" (java.util.regex.Pattern/quote (str name)) "\\]\\s*")) "")
+                  str/trim)]
+    (when (and (seq texto) (not= texto name))
+      (if (> (count texto) max-title-chars)
+        (str (subs texto 0 max-title-chars) "…")
+        texto))))
+
+(defn task-title
+  "Título legible de una tarjeta, sacado de `tasks/<name>.md`.
+
+  El nombre de la tarjeta es la clave del sistema (da nombre al archivo, a la
+  lane y a la cabecera `task:` de los handoffs), así que no puede llevar el
+  título adentro. Pero el documento de tarea empieza por él, y de ahí se lee:
+  la primera línea con contenido que no sea el encabezado del propio nombre.
+
+  Devuelve nil si el archivo no existe o no tiene nada aprovechable; en ese
+  caso la tarjeta se muestra como hasta ahora, solo con el nombre."
+  [root name]
+  (let [file (fs/path root "tasks" (str name ".md"))]
+    (when (fs/regular-file? file)
+      (try
+        (->> (str/split-lines (slurp (str file)))
+             (map #(clean-title % name))
+             (some identity))
+        (catch Exception _ nil)))))
+
 (defn last-n-lines [text n]
   (vec (take-last n (str/split-lines (or text "")))))
 
@@ -296,7 +333,10 @@
   (or (last (im-status-lines role text backend)) ""))
 
 (defn board-tasks [root]
-  (mapv task-entry (lines (pack-board root "list"))))
+  (mapv (fn [line]
+          (let [entry (task-entry line)]
+            (assoc entry :title (task-title root (:name entry)))))
+        (lines (pack-board root "list"))))
 
 (defn pane-status-lines-for [root role]
   (let [row (role-row root role)

@@ -27,6 +27,7 @@ header.top h1{margin:0;font-size:15px}.meta{color:var(--muted);font-size:12px}.m
 .btn:disabled:hover,.btn[disabled]:hover{background:#fff;border-color:#9aa59e;color:var(--ink)}
 .btn-approve:disabled:hover,.btn-approve[disabled]:hover{background:#2f6b3a;border-color:#2f6b3a;color:#fff}
 .attention{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;padding:10px 14px;background:var(--amber-bg);border-bottom:1px solid #efd7a8;font-size:13px;max-height:40vh;overflow:auto;position:relative;z-index:30}
+.card-title{font-size:10px;line-height:1.3;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .wif-model{font-size:10px;color:var(--muted);line-height:1.3;margin-top:1px;overflow-wrap:anywhere}
 .pack-source{color:var(--muted)}
 .attention .tag{font-weight:700;text-transform:uppercase;font-size:10px;color:#8a5a0a;padding-top:4px}
@@ -283,6 +284,15 @@ function cardEl(task, opts) {
   audit.append(auditIcon, auditValue);
   title.appendChild(audit);
   card.appendChild(title);
+  // El nombre de la tarjeta es la clave del sistema (CU-1234); el título del
+  // ticket va debajo, para saber de qué se trata sin abrirla.
+  if (!thin && task.title) {
+    const subtitle = document.createElement("div");
+    subtitle.className = "card-title";
+    subtitle.textContent = task.title;
+    subtitle.title = task.title;
+    card.appendChild(subtitle);
+  }
   if (!thin && task.status) {
     const status = document.createElement("div");
     status.className = "status";

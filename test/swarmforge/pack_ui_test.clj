@@ -457,6 +457,36 @@
       (finally
         (stop-tmux! sock)))))
 
+(deftest pack-web-exposes-the-ticket-title-of-a-card
+  ;; Given una tarjeta cuyo documento de tarea empieza por el título del ticket
+  ;; When pack_web --test-state
+  ;; Then la tarjeta trae ese título en `title`
+  ;;
+  ;; El nombre de la tarjeta es la clave del sistema (da nombre al archivo de
+  ;; tarea, a la lane y a la cabecera `task:` de los handoffs), así que no puede
+  ;; llevar el título adentro. El título se deriva del documento para que la
+  ;; tarjeta diga de qué se trata sin abrirla.
+  (let [root (tmp-dir)
+        _ (setup-pack! root)
+        _ (create-task root "CU-1234" "specifier")]
+    (write-file (fs/path root "tasks" "CU-1234.md")
+                "# CU-1234\n\n# [CU-1234] Crear y duplicar reglas solo para admins\n\nCuerpo.\n")
+    (let [card (first (:tasks (web-state root)))]
+      (is (= "CU-1234" (:name card)))
+      (is (= "Crear y duplicar reglas solo para admins" (:title card))))))
+
+(deftest pack-web-omits-the-title-when-there-is-nothing-usable
+  ;; Si el documento solo repite el nombre, o no existe, la tarjeta se muestra
+  ;; como hasta ahora: el dashboard no debe inventar un título.
+  (let [root (tmp-dir)
+        _ (setup-pack! root)
+        _ (create-task root "CU-5678" "specifier")
+        doc (fs/path root "tasks" "CU-5678.md")]
+    (write-file doc "# CU-5678\n\n")
+    (is (nil? (:title (first (:tasks (web-state root))))))
+    (fs/delete doc)
+    (is (nil? (:title (first (:tasks (web-state root))))))))
+
 (deftest pack-web-exposes-dashboard-state-from-conf-and-board
   ;; Given a six-pack with specifier as master and a board card
   ;; When pack_web --test-state
