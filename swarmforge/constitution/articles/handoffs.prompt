@@ -44,6 +44,16 @@ message: <one line, max 80 chars>
 ```
 
 - If `swarm_handoff.sh` reports validation errors, repair the draft and rerun it.
+- If it prints `AUDIT_REQUIRED` / `HANDOFF_NOT_QUEUED`, **your handoff was not
+  sent**. It is a self-audit, not an operator gate: nothing is waiting for the
+  operator to release, and the Attention bar will stay empty. Do the audit the
+  message describes, then run `swarm_handoff.sh` again with the same draft. An
+  identical second pass is what actually queues it.
+- The `.edn` file this leaves under `.swarmforge/handoffs/audit_pending/` is the
+  record of that first pass, not a queue. Do not read it as evidence that the
+  handoff is pending approval, and never report the task as complete because it
+  exists. The operator queue is `.swarmforge/handoffs/pending_approval/`, in the
+  project root, and it holds `.handoff` files.
 - After a successful send, the helper removes the draft file. If you need to
   remove a stale draft manually, use `rm <draft-file>`, not `rm -f`.
 - Do not write long handoff bodies. The helper generates the delivered payload.
@@ -66,7 +76,13 @@ message: <one line, max 80 chars>
   every conflicted file, `git add` them, and commit. You own conflict
   resolution. Do not invent a new `git merge`. Parallel cards on one tree
   will conflict; that is expected.
-- If it prints `NO_TASK`, stop waiting for work.
+- If it prints `NO_TASK`, you have no work. End your turn and stay idle. Do not
+  explore the repository, read the task document, inspect handoff directories,
+  or start work of your own: a role that invents work builds on the wrong tree,
+  because the commits it needs have not been merged into this worktree yet. New
+  work arrives as a tmux notification; when one arrives, run
+  `ready_for_next.sh` again. If you are told there is mail, run it again even if
+  a previous call returned `NO_TASK`.
 - If it prints `TASK: <path>`, treat the printed `PAYLOAD` as the task.
 - If it prints `TASK_NAME: <name>`, use that as the stable task name for any
   work you forward from that task.
@@ -81,5 +97,5 @@ message: <one line, max 80 chars>
   `done_with_current.sh` before accepting any other handoff.
 - If `done_with_current.sh` prints `MAIL_WAITING`, run `ready_for_next.sh` as a
   new turn. Do not treat done output as the next merge.
-- If a done helper prints `NO_TASK`, stop waiting for work.
+- If a done helper prints `NO_TASK`, you have no work: end your turn and stay idle, under the same rule as above.
 - On restart, run `ready_for_next.sh` and follow its output.

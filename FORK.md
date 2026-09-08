@@ -62,6 +62,8 @@ Al rebasar, los conflictos se concentran en estos puntos:
 | Assertions del formato de `roles.tsv` | `test/swarmforge/script_test.clj` — `swarmforge-parses-propagation-tokens` |
 | `agent`, `model`, `repo` y `branch` en el payload | `swarmforge/scripts/pack_web.bb` — `model-name`, `queue-row`, `project-source`, `dashboard-state` |
 | Modelo por rol, repo/branch y layout del board | `swarmforge/scripts/pack/dashboard.html` — `workRow`, `renderChrome`, `.attention`, `.col`, `.card` |
+| Semántica de `NO_TASK` y de `AUDIT_REQUIRED` | `swarmforge/constitution/articles/handoffs.prompt` |
+| Marcador `AUDIT_REQUIRED.txt` en `audit_pending/` | `swarmforge/scripts/swarm_handoff.bb` — `write-audit!` |
 | Script de instalación de swarms opencode | `setup-swarm` (archivo propio) |
 | Permiso `external_directory` de opencode | `swarmforge/scripts/swarmforge.bb` — `ensure-opencode-external-reads!`, llamada desde `launch-role!` |
 | Adaptador de GNOME Terminal | `swarmforge/scripts/terminal-adapters/gnome-terminal.sh` (propio) y dos inserciones en `swarmforge/scripts/swarm-terminal-adapter.sh` |

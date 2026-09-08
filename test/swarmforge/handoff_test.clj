@@ -772,6 +772,38 @@
       (is (fs/exists? queued-next))
       (is (nil? (header queued-next "dequeued_at"))))))
 
+(deftest swarm-handoff-marks-the-audit-directory-as-not-queued
+  ;; Given una primera pasada que deja el handoff en audit_pending
+  ;; When se mira el directorio desde el filesystem
+  ;; Then hay un marcador que dice que NO se encoló, y el .edn lleva el estado
+  ;;
+  ;; Un agente que perdió el output de swarm_handoff.sh reconstruye el estado
+  ;; mirando archivos, y "audit_pending" al lado de "pending_approval" se lee
+  ;; como cola de aprobación del operador. Sin el marcador, esa lectura
+  ;; equivocada es la razonable, y el rol se declara terminado sin haber
+  ;; enviado nada.
+  (let [root (tmp-dir)
+        _ (init-repo! root)
+        _ (setup-project! root)
+        _ (write-file (fs/path root ".swarmforge/board/tasks.tsv")
+                      "marker\tsender\tcreated\tupdated\tmarker-id\t0\n")
+        draft (fs/path root "tmp" "marker.handoff")
+        opts {:dir root :env {"SWARMFORGE_ROLE" "sender"}}]
+    (write-file draft "type: git_handoff\nto: receiver\npriority: 50\ntask: marker\n")
+    (let [first-call (run opts (script "swarm_handoff.sh") (str draft))]
+      (is (str/includes? (:out first-call) "AUDIT_REQUIRED"))
+      (let [marker (fs/path (audit-pending-dir root) "AUDIT_REQUIRED.txt")]
+        (is (fs/exists? marker))
+        (is (str/includes? (read-file marker) "were NOT queued"))
+        (is (str/includes? (read-file marker) "pending_approval")))
+      (let [edn (first (audit-edn-files root))]
+        (is (some? edn))
+        (is (str/includes? (read-file edn) "AUDIT_REQUIRED"))))
+    ;; El marcador no debe confundirse con un audit: la segunda pasada envía.
+    (let [submitted (run opts (script "swarm_handoff.sh") (str draft))]
+      (is (some? (queued-path (:out submitted))))
+      (is (empty? (audit-edn-files root))))))
+
 (deftest swarm-handoff-requires-a-new-audit-after-the-commit-changes
   (let [root (tmp-dir)
         _ (init-repo! root)

@@ -366,10 +366,40 @@
       (edn/read-string (slurp (str path)))
       (catch Exception _ nil))))
 
+(def audit-readme-text
+  (str "AUDIT_REQUIRED — the handoffs recorded here were NOT queued.\n"
+       "\n"
+       "This directory is a sender-side self-audit, not an approval queue. A\n"
+       "`.edn` file here means swarm_handoff.sh refused the send on its first\n"
+       "pass and is waiting for the SENDING AGENT to audit its own work and run\n"
+       "swarm_handoff.sh again with an identical draft. Nothing here is waiting\n"
+       "for the operator, and none of it appears in the dashboard's Attention\n"
+       "bar.\n"
+       "\n"
+       "Do not report a task as complete because a file exists here. It means\n"
+       "the opposite: the handoff never left.\n"
+       "\n"
+       "The operator approval queue is ../pending_approval/, which holds\n"
+       "`.handoff` files.\n"))
+
+(defn write-audit-readme! [dir]
+  "Deja el marcador junto a los .edn.
+
+  Un agente que pierde el output de swarm_handoff.sh reconstruye el estado
+  mirando el filesystem, y ahí `audit_pending` se lee como cola de aprobación
+  —vive al lado de `pending_approval`, que sí lo es—. Sin este archivo, la
+  lectura equivocada es la razonable."
+  (let [path (fs/path dir "AUDIT_REQUIRED.txt")]
+    (when-not (fs/exists? path)
+      (spit (str path) audit-readme-text))))
+
 (defn write-audit! [path candidate]
   (fs/create-dirs (fs/parent path))
+  (write-audit-readme! (fs/parent (fs/parent path)))
   (let [tmp (fs/create-temp-file {:dir (fs/parent path) :prefix ".audit."})]
-    (spit (str tmp) (str (pr-str {:candidate candidate :created-at (timestamp)}) "\n"))
+    (spit (str tmp) (str (pr-str {:candidate candidate
+                                  :status "AUDIT_REQUIRED: handoff NOT queued; re-run swarm_handoff.sh with the same draft"
+                                  :created-at (timestamp)}) "\n"))
     (fs/move tmp path {:replace-existing true})))
 
 (defn with-audit-lock [f]
